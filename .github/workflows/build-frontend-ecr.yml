@@ -1,0 +1,39 @@
+name: Build and Push Frontend to ECR (DEV)
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login no Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build da imagem Docker (frontend)
+        run: |
+          docker build -t igreja-frontend:dev .
+
+      - name: Tag da imagem para o ECR
+        run: |
+          docker tag igreja-frontend:dev \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/igreja-frontend:dev
+
+      - name: Push da imagem para o ECR
+        run: |
+          docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/igreja-frontend:dev
+
